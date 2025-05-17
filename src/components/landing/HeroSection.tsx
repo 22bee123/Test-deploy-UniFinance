@@ -1,7 +1,15 @@
 
 import { Button } from "@/components/ui/button";
+import AuthModal from "../auth/AuthModal";
+import { useRef } from "react";
 
 const HeroSection = () => {
+  const scrollToFeatures = () => {
+    const featuresSection = document.getElementById('features-section');
+    if (featuresSection) {
+      featuresSection.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
   return (
     <div className="relative bg-white overflow-hidden">
       <div className="absolute inset-0">
@@ -20,8 +28,10 @@ const HeroSection = () => {
               Budget with confidence, find new income streams, and build your financial future—without the stress or confusion.
             </p>
             <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
-              <Button size="lg" className="px-8 py-6">Get Started</Button>
-              <Button size="lg" variant="outline" className="px-8 py-6">See Features</Button>
+              <AuthModal defaultTab="signup">
+                <Button size="lg" className="px-8 py-6">Get Started</Button>
+              </AuthModal>
+              <Button size="lg" variant="outline" className="px-8 py-6" onClick={scrollToFeatures}>See Features</Button>
             </div>
             <div className="mt-8">
               <p className="text-sm text-gray-500">Trusted by students at</p>
