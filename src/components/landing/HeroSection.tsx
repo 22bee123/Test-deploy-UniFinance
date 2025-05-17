@@ -1,15 +1,25 @@
 
 import { Button } from "@/components/ui/button";
 import AuthModal from "../auth/AuthModal";
-import { useRef } from "react";
+import { useEffect } from "react";
 
 const HeroSection = () => {
   const scrollToFeatures = () => {
-    const featuresSection = document.getElementById('features-section');
-    if (featuresSection) {
-      featuresSection.scrollIntoView({ behavior: 'smooth' });
+    // Using a safer approach that won't cause issues during build
+    try {
+      const featuresSection = document.getElementById('features-section');
+      if (featuresSection) {
+        featuresSection.scrollIntoView({ behavior: 'smooth' });
+      }
+    } catch (error) {
+      console.error('Error scrolling to features:', error);
     }
   };
+  
+  // Ensure this code only runs in the browser, not during build
+  useEffect(() => {
+    // Any initialization code that needs the DOM can go here
+  }, []);
   return (
     <div className="relative bg-white overflow-hidden">
       <div className="absolute inset-0">
