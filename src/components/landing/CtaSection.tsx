@@ -40,7 +40,7 @@ const CtaSection = () => {
               <Button 
                 size="lg" 
                 variant="outline" 
-                className="text-white border-white hover:bg-uni-purple-700"
+                className="text-uni-purple-800 border-uni-purple-800 hover:bg-gray-100"
                 onClick={scrollToFeatures}
               >
                 See How It Works
