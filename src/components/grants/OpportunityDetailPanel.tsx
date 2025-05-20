@@ -6,6 +6,7 @@ import {
   FileText, X, Award, Info
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
+import { useState } from "react";
 
 interface OpportunityDetailPanelProps {
   opportunity: any;
@@ -14,6 +15,7 @@ interface OpportunityDetailPanelProps {
 
 const OpportunityDetailPanel = ({ opportunity, onClose }: OpportunityDetailPanelProps) => {
   const deadlineDate = parseISO(opportunity.deadline);
+  const [isRedirecting, setIsRedirecting] = useState(false);
   
   const getBadgeVariant = (type: string) => {
     switch (type) {
@@ -34,6 +36,145 @@ const OpportunityDetailPanel = ({ opportunity, onClose }: OpportunityDetailPanel
     const differenceInTime = deadlineDate.getTime() - today.getTime();
     const differenceInDays = Math.ceil(differenceInTime / (1000 * 3600 * 24));
     return differenceInDays;
+  };
+  
+  // Function to generate the appropriate application URL based on the opportunity
+  const getApplicationUrl = () => {
+    // Check if the opportunity has a direct source URL
+    if (opportunity.sourceUrl) {
+      return opportunity.sourceUrl;
+    }
+    
+    // Create a search-friendly version of the opportunity title
+    const searchQuery = encodeURIComponent(`${opportunity.title} ${opportunity.provider} ${opportunity.type}`);
+    
+    // Specific URL patterns for different types of opportunities
+    const specificUrls: Record<string, Record<string, string>> = {
+      // Specific scholarship URLs
+      'scholarship': {
+        'Academic Excellence Scholarship': 'https://www.ucas.com/scholarships-grants-and-bursaries-academic-excellence-and-merit',
+        'Sports Excellence Scholarship': 'https://www.ucas.com/scholarships-grants-and-bursaries-sports',
+        'Arts and Creative Scholarship': 'https://www.ucas.com/scholarships-grants-and-bursaries-arts',
+        'Cowrie Scholarship Foundation': 'https://cowriescholarshipfoundation.org.uk/apply/',
+        '93% Club Scholarship': 'https://www.93percent.club/support',
+      },
+      // Specific grant URLs
+      'grant': {
+        'Welsh Government Learning Grant': 'https://www.studentfinancewales.co.uk/undergraduate-students/new-students/what-financial-support-is-available/welsh-government-learning-grant/',
+        'Disabled Students Allowance': 'https://www.gov.uk/disabled-students-allowance-dsa',
+        'Childcare Grant': 'https://www.gov.uk/childcare-grant',
+        'Parents Learning Allowance': 'https://www.gov.uk/parents-learning-allowance',
+        'Maintenance Grant': 'https://www.gov.uk/student-finance/grants-and-bursaries',
+        'STEM Research Grant': 'https://royalsociety.org/grants-schemes-awards/',
+        'Arts and Humanities Funding': 'https://www.artscouncil.org.uk/funding',
+      },
+      // Specific bursary URLs
+      'bursary': {
+        'Care Leavers Bursary': 'https://www.ucas.com/finance/additional-funding/financial-support-care-experienced-students',
+        'Income-Based Bursary': 'https://www.ucas.com/finance/scholarships-grants-and-bursaries',
+        'Hardship Fund': 'https://www.thescholarshiphub.org.uk/',
+        'Access Bursary': 'https://www.lse.ac.uk/study-at-lse/undergraduate/fees-and-funding/access-and-participation-plan',
+      }
+    };
+    
+    // Try to find a specific URL for this exact opportunity
+    const typeSpecificUrls = specificUrls[opportunity.type];
+    if (typeSpecificUrls && typeSpecificUrls[opportunity.title]) {
+      return typeSpecificUrls[opportunity.title];
+    }
+    
+    // Provider-specific URLs as fallback
+    const providerUrls: Record<string, string> = {
+      'UCAS': 'https://www.ucas.com/money-and-student-life/money/scholarships-grants-and-bursaries',
+      'UCAS Listed Provider': 'https://www.ucas.com/money-and-student-life/money/scholarships-grants-and-bursaries',
+      'The Scholarship Hub': 'https://www.thescholarshiphub.org.uk/your-2024-guide-to-grants-bursaries-and-scholarships-for-uk-students/',
+      'UK Universities': 'https://www.ucas.com/scholarships-grants-and-bursaries-academic-excellence-and-merit',
+      'UK Government': 'https://www.gov.uk/student-finance',
+      'University Bursary Schemes': 'https://www.thescholarshiphub.org.uk/',
+      'UK Scholarship Portal': 'https://www.scholarshipportal.com/scholarships/united-kingdom',
+      'University of Manchester': 'https://www.manchester.ac.uk/study/undergraduate/student-finance/scholarships-bursaries/',
+      'London School of Economics': 'https://www.lse.ac.uk/study-at-lse/undergraduate/fees-and-funding',
+      'Student Finance Wales': 'https://www.studentfinancewales.co.uk/',
+      'Student Finance England': 'https://www.gov.uk/student-finance',
+      'Royal Society': 'https://royalsociety.org/grants-schemes-awards/',
+      'Arts Council England': 'https://www.artscouncil.org.uk/funding',
+      'University of Birmingham': 'https://www.birmingham.ac.uk/undergraduate/fees/funding',
+      'Cowrie Foundation': 'https://cowriescholarshipfoundation.org.uk/',
+      '93% Club': 'https://www.93percent.club/',
+      'Various Universities': 'https://www.ucas.com/finance/scholarships-grants-and-bursaries',
+      'UniFinance Live Data': 'https://www.thescholarshiphub.org.uk/'
+    };
+    
+    // Try to find the provider-specific URL
+    if (providerUrls[opportunity.provider]) {
+      return providerUrls[opportunity.provider];
+    }
+    
+    // If we still don't have a URL, use a search engine with the opportunity details
+    // This will help users find the specific opportunity even if we don't have a direct link
+    return `https://www.google.com/search?q=${searchQuery}`;
+  };
+  
+  // Get the specific source website based on the opportunity title and type
+  const getSourceWebsite = () => {
+    // Map opportunity titles to their source websites
+    const sourceMap: Record<string, string> = {
+      // UCAS sources
+      'Academic Excellence Scholarship': 'https://www.ucas.com/scholarships-grants-and-bursaries-academic-excellence-and-merit',
+      'Sports Excellence Scholarship': 'https://www.ucas.com/scholarships-grants-and-bursaries-sports',
+      'Low Income Funding': 'https://www.ucas.com/scholarships-grants-and-bursaries-low-income-households',
+      'Widening Participation Funding': 'https://www.ucas.com/money-and-student-life/money/scholarships-grants-and-bursaries/widening-participation',
+      
+      // Scholarship Hub sources
+      'Care Leavers Bursary': 'https://www.thescholarshiphub.org.uk/your-2024-guide-to-grants-bursaries-and-scholarships-for-uk-students/',
+      'Income-Based Bursary': 'https://www.thescholarshiphub.org.uk/your-2024-guide-to-grants-bursaries-and-scholarships-for-uk-students/',
+      'Hardship Fund': 'https://www.thescholarshiphub.org.uk/your-2024-guide-to-grants-bursaries-and-scholarships-for-uk-students/',
+      
+      // Government sources
+      'Welsh Government Learning Grant': 'https://www.studentfinancewales.co.uk/undergraduate-students/new-students/what-financial-support-is-available/welsh-government-learning-grant/',
+      'Disabled Students Allowance': 'https://www.gov.uk/disabled-students-allowance-dsa',
+      'Childcare Grant': 'https://www.gov.uk/childcare-grant',
+      'Parents Learning Allowance': 'https://www.gov.uk/parents-learning-allowance',
+      
+      // University-specific sources
+      'University of Manchester': 'https://www.manchester.ac.uk/study/undergraduate/student-finance/scholarships-bursaries/',
+      'London School of Economics': 'https://www.lse.ac.uk/study-at-lse/undergraduate/fees-and-funding',
+      
+      // Organization-specific sources
+      'Cowrie Scholarship Foundation': 'https://cowriescholarshipfoundation.org.uk/apply/',
+      '93% Club Scholarship': 'https://www.93percent.club/support',
+      'Royal Society': 'https://royalsociety.org/grants-schemes-awards/',
+      'Arts Council England': 'https://www.artscouncil.org.uk/funding',
+    };
+    
+    // First try to match by exact title
+    if (sourceMap[opportunity.title]) {
+      return sourceMap[opportunity.title];
+    }
+    
+    // If no exact match, try to find a partial match
+    for (const [key, url] of Object.entries(sourceMap)) {
+      if (opportunity.title.includes(key) || key.includes(opportunity.title)) {
+        return url;
+      }
+    }
+    
+    // If still no match, use the application URL
+    return getApplicationUrl();
+  };
+  
+  // Handle the apply now button click
+  const handleApplyNowClick = () => {
+    setIsRedirecting(true);
+    const applicationUrl = getApplicationUrl();
+    
+    // Open the application URL in a new tab
+    window.open(applicationUrl, '_blank');
+    
+    // Reset the redirecting state after a short delay
+    setTimeout(() => {
+      setIsRedirecting(false);
+    }, 1000);
   };
 
   const daysRemaining = getDaysRemaining();
@@ -142,9 +283,22 @@ const OpportunityDetailPanel = ({ opportunity, onClose }: OpportunityDetailPanel
         </div>
         
         <div className="pt-4 space-y-2">
-          <Button className="w-full">
-            <Award className="h-4 w-4 mr-2" />
-            Apply Now
+          <Button 
+            className="w-full" 
+            onClick={handleApplyNowClick}
+            disabled={isRedirecting}
+          >
+            {isRedirecting ? (
+              <>
+                <span className="animate-spin mr-2">⟳</span>
+                Redirecting...
+              </>
+            ) : (
+              <>
+                <Award className="h-4 w-4 mr-2" />
+                Apply Now
+              </>
+            )}
           </Button>
           
           <div className="grid grid-cols-3 gap-2">
@@ -156,7 +310,12 @@ const OpportunityDetailPanel = ({ opportunity, onClose }: OpportunityDetailPanel
               <Share className="h-4 w-4 mr-2" />
               Share
             </Button>
-            <Button variant="outline" size="sm" className="w-full">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="w-full"
+              onClick={() => window.open(getApplicationUrl(), '_blank')}
+            >
               <ExternalLink className="h-4 w-4 mr-2" />
               Website
             </Button>
