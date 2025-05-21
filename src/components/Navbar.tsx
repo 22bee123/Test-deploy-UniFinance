@@ -16,6 +16,15 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+  SheetTrigger,
+  SheetClose,
+} from "@/components/ui/sheet";
 import { Menu, X, Home, CircleDollarSign, CreditCard, HelpCircle, Bot } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Link, useLocation } from "react-router-dom";
@@ -143,100 +152,99 @@ const Navbar = () => {
             
             {/* Mobile menu button */}
             <div className="flex items-center md:hidden ml-2">
-              <Button variant="ghost" size="icon" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
-                {mobileMenuOpen ? (
-                  <X className="h-6 w-6" aria-hidden="true" />
-                ) : (
-                  <Menu className="h-6 w-6" aria-hidden="true" />
-                )}
-              </Button>
+              <Sheet>
+                <SheetTrigger asChild>
+                  <Button variant="ghost" size="icon">
+                    <Menu className="h-6 w-6" aria-hidden="true" />
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="right" className="w-[300px] sm:w-[350px] pt-10">
+                  <SheetHeader className="mb-6">
+                    <SheetTitle className="font-display text-xl text-uni-purple-700 font-bold">
+                      Uni<span className="text-uni-purple-500">Finance</span>
+                    </SheetTitle>
+                  </SheetHeader>
+                  <div className="flex flex-col space-y-3">
+                    <Link 
+                      to="/" 
+                      className={cn(
+                        "flex items-center px-3 py-2 rounded-md text-base font-medium",
+                        isActive("/") 
+                          ? "bg-uni-purple-50 text-uni-purple-700" 
+                          : "hover:bg-uni-purple-50 hover:text-uni-purple-700"
+                      )}
+                    >
+                      <Home className="mr-2 h-5 w-5" />
+                      Home
+                    </Link>
+                    
+                    <Link 
+                      to="/grants-and-funding" 
+                      className={cn(
+                        "flex items-center px-3 py-2 rounded-md text-base font-medium",
+                        isActive("/grants") || isActive("/grants-and-funding")
+                          ? "bg-uni-purple-50 text-uni-purple-700" 
+                          : "hover:bg-uni-purple-50 hover:text-uni-purple-700"
+                      )}
+                    >
+                      <CircleDollarSign className="mr-2 h-5 w-5" />
+                      Grants & Funding
+                    </Link>
+                    
+                    <Link 
+                      to="/pricing" 
+                      className={cn(
+                        "flex items-center px-3 py-2 rounded-md text-base font-medium",
+                        isActive("/pricing")
+                          ? "bg-uni-purple-50 text-uni-purple-700" 
+                          : "hover:bg-uni-purple-50 hover:text-uni-purple-700"
+                      )}
+                    >
+                      <CreditCard className="mr-2 h-5 w-5" />
+                      Pricing
+                    </Link>
+                    
+                    <Link 
+                      to="/dashboard" 
+                      className={cn(
+                        "flex items-center px-3 py-2 rounded-md text-base font-medium",
+                        isActive("/dashboard")
+                          ? "bg-uni-purple-50 text-uni-purple-700" 
+                          : "hover:bg-uni-purple-50 hover:text-uni-purple-700"
+                      )}
+                    >
+                      <HelpCircle className="mr-2 h-5 w-5" />
+                      Help Center
+                    </Link>
+                    
+                    <Link 
+                      to="/ai-assistant" 
+                      className={cn(
+                        "flex items-center px-3 py-2 rounded-md text-base font-medium",
+                        isActive("/ai-assistant")
+                          ? "bg-uni-purple-50 text-uni-purple-700" 
+                          : "hover:bg-uni-purple-50 hover:text-uni-purple-700"
+                      )}
+                    >
+                      <Bot className="mr-2 h-5 w-5" />
+                      AI Assistant
+                    </Link>
+                    
+                    <div className="mt-4 pt-4 border-t">
+                      <AuthModal defaultTab="signup">
+                        <Button variant="default" className="w-full">
+                          Get Started
+                        </Button>
+                      </AuthModal>
+                    </div>
+                  </div>
+                </SheetContent>
+              </Sheet>
             </div>
           </div>
         </div>
       </div>
       
-      {/* Mobile menu */}
-      {mobileMenuOpen && (
-        <div className="md:hidden">
-          <div className="px-2 pt-2 pb-3 space-y-1 bg-white border-b">
-            <Link 
-              to="/" 
-              className={cn(
-                "block px-3 py-2 rounded-md text-base font-medium flex items-center",
-                isActive("/") 
-                  ? "bg-uni-purple-50 text-uni-purple-700" 
-                  : "hover:bg-uni-purple-50 hover:text-uni-purple-700"
-              )}
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              <Home className="mr-2 h-5 w-5" />
-              Home
-            </Link>
-            
-            <Link 
-              to="/grants-and-funding" 
-              className={cn(
-                "block px-3 py-2 rounded-md text-base font-medium flex items-center",
-                isActive("/grants") || isActive("/grants-and-funding")
-                  ? "bg-uni-purple-50 text-uni-purple-700" 
-                  : "hover:bg-uni-purple-50 hover:text-uni-purple-700"
-              )}
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              <CircleDollarSign className="mr-2 h-5 w-5" />
-              Grants & Funding
-            </Link>
-            
-            <Link 
-              to="/pricing" 
-              className={cn(
-                "block px-3 py-2 rounded-md text-base font-medium flex items-center",
-                isActive("/pricing")
-                  ? "bg-uni-purple-50 text-uni-purple-700" 
-                  : "hover:bg-uni-purple-50 hover:text-uni-purple-700"
-              )}
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              <CreditCard className="mr-2 h-5 w-5" />
-              Pricing
-            </Link>
-            
-            <Link 
-              to="/dashboard" 
-              className={cn(
-                "block px-3 py-2 rounded-md text-base font-medium flex items-center",
-                isActive("/dashboard")
-                  ? "bg-uni-purple-50 text-uni-purple-700" 
-                  : "hover:bg-uni-purple-50 hover:text-uni-purple-700"
-              )}
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              <HelpCircle className="mr-2 h-5 w-5" />
-              Help Center
-            </Link>
-            
-            <Link 
-              to="/ai-assistant" 
-              className={cn(
-                "block px-3 py-2 rounded-md text-base font-medium flex items-center",
-                isActive("/ai-assistant")
-                  ? "bg-uni-purple-50 text-uni-purple-700" 
-                  : "hover:bg-uni-purple-50 hover:text-uni-purple-700"
-              )}
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              <Bot className="mr-2 h-5 w-5" />
-              AI Assistant
-            </Link>
-            
-            <AuthModal defaultTab="signup">
-              <Button variant="default" className="w-full mt-3" onClick={() => setMobileMenuOpen(false)}>
-                Get Started
-              </Button>
-            </AuthModal>
-          </div>
-        </div>
-      )}
     </nav>
   );
 };

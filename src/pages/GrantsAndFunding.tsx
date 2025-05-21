@@ -1,6 +1,8 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import FundingOpportunitiesDashboard from "@/components/grants/FundingOpportunitiesDashboard";
 import SearchAndFilter from "@/components/grants/SearchAndFilter";
 import ApplicationTracker from "@/components/grants/ApplicationTracker";
@@ -12,6 +14,21 @@ import SavedOpportunitiesSidebar from "@/components/grants/SavedOpportunitiesSid
 const GrantsAndFunding = () => {
   const [selectedTab, setSelectedTab] = useState("dashboard");
   const [selectedOpportunity, setSelectedOpportunity] = useState<any>(null);
+  const [isMobile, setIsMobile] = useState(false);
+  
+  // Check if the screen is mobile size
+  useEffect(() => {
+    const checkIfMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkIfMobile();
+    window.addEventListener("resize", checkIfMobile);
+    
+    return () => {
+      window.removeEventListener("resize", checkIfMobile);
+    };
+  }, []);
 
   return (
     <div className="min-h-screen bg-background">
@@ -23,13 +40,52 @@ const GrantsAndFunding = () => {
           </div>
           
           <Tabs value={selectedTab} onValueChange={setSelectedTab} className="w-full">
-            <TabsList className="grid grid-cols-5 mb-8">
-              <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
-              <TabsTrigger value="search">Search & Filter</TabsTrigger>
-              <TabsTrigger value="tracker">Application Tracker</TabsTrigger>
-              <TabsTrigger value="assistant">AI Assistant</TabsTrigger>
-              <TabsTrigger value="resources">UK Funding Info</TabsTrigger>
-            </TabsList>
+            <div className="relative mb-8">
+              {isMobile && (
+                <div className="flex justify-between items-center mb-2">
+                  <Button 
+                    variant="outline" 
+                    size="icon" 
+                    className="h-8 w-8"
+                    onClick={() => {
+                      const values = ["dashboard", "search", "tracker", "assistant", "resources"];
+                      const currentIndex = values.indexOf(selectedTab);
+                      const prevIndex = (currentIndex - 1 + values.length) % values.length;
+                      setSelectedTab(values[prevIndex]);
+                    }}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <span className="text-sm font-medium">
+                    {selectedTab === "dashboard" && "Dashboard"}
+                    {selectedTab === "search" && "Search & Filter"}
+                    {selectedTab === "tracker" && "Application Tracker"}
+                    {selectedTab === "assistant" && "AI Assistant"}
+                    {selectedTab === "resources" && "UK Funding Info"}
+                  </span>
+                  <Button 
+                    variant="outline" 
+                    size="icon" 
+                    className="h-8 w-8"
+                    onClick={() => {
+                      const values = ["dashboard", "search", "tracker", "assistant", "resources"];
+                      const currentIndex = values.indexOf(selectedTab);
+                      const nextIndex = (currentIndex + 1) % values.length;
+                      setSelectedTab(values[nextIndex]);
+                    }}
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
+              <TabsList className={`${isMobile ? 'hidden' : 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5'} mb-4`}>
+                <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+                <TabsTrigger value="search">Search & Filter</TabsTrigger>
+                <TabsTrigger value="tracker">Application Tracker</TabsTrigger>
+                <TabsTrigger value="assistant">AI Assistant</TabsTrigger>
+                <TabsTrigger value="resources">UK Funding Info</TabsTrigger>
+              </TabsList>
+            </div>
             
             <TabsContent value="dashboard" className="mt-0">
               <FundingOpportunitiesDashboard setSelectedOpportunity={setSelectedOpportunity} />

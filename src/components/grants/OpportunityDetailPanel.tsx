@@ -102,7 +102,7 @@ const OpportunityDetailPanel = ({ opportunity, onClose }: OpportunityDetailPanel
       'Cowrie Foundation': 'https://cowriescholarshipfoundation.org.uk/',
       '93% Club': 'https://www.93percent.club/',
       'Various Universities': 'https://www.ucas.com/finance/scholarships-grants-and-bursaries',
-      'UniFinance Live Data': 'https://www.thescholarshiphub.org.uk/'
+      'Blackbullion': 'https://www.blackbullion.com/funding?init=1&residence_region[]=PH&study_organisation[]=41&user-init=1'
     };
     
     // Try to find the provider-specific URL
@@ -145,6 +145,9 @@ const OpportunityDetailPanel = ({ opportunity, onClose }: OpportunityDetailPanel
       '93% Club Scholarship': 'https://www.93percent.club/support',
       'Royal Society': 'https://royalsociety.org/grants-schemes-awards/',
       'Arts Council England': 'https://www.artscouncil.org.uk/funding',
+      
+      // Blackbullion sources
+      'Blackbullion Funding': 'https://www.blackbullion.com/funding?init=1&residence_region[]=PH&study_organisation[]=41&user-init=1',
     };
     
     // First try to match by exact title
@@ -231,22 +234,35 @@ const OpportunityDetailPanel = ({ opportunity, onClose }: OpportunityDetailPanel
           <div>
             <h3 className="font-medium text-sm text-muted-foreground mb-1">Application Requirements</h3>
             <ul className="text-sm space-y-2">
-              <li className="flex items-start">
-                <Check className="h-4 w-4 text-green-500 mt-0.5 mr-2 flex-shrink-0" />
-                <span>Personal statement (500 words)</span>
-              </li>
-              <li className="flex items-start">
-                <Check className="h-4 w-4 text-green-500 mt-0.5 mr-2 flex-shrink-0" />
-                <span>Academic transcript or predicted grades</span>
-              </li>
-              <li className="flex items-start">
-                <Check className="h-4 w-4 text-green-500 mt-0.5 mr-2 flex-shrink-0" />
-                <span>One academic reference</span>
-              </li>
-              <li className="flex items-start">
-                <Check className="h-4 w-4 text-green-500 mt-0.5 mr-2 flex-shrink-0" />
-                <span>Proof of household income (if applicable)</span>
-              </li>
+              {opportunity.applicationRequirements && opportunity.applicationRequirements.length > 0 ? (
+                // Display scraped requirements if available
+                opportunity.applicationRequirements.map((requirement, index) => (
+                  <li key={index} className="flex items-start">
+                    <Check className="h-4 w-4 text-green-500 mt-0.5 mr-2 flex-shrink-0" />
+                    <span>{requirement}</span>
+                  </li>
+                ))
+              ) : (
+                // Fallback requirements if none are provided
+                <>
+                  <li className="flex items-start">
+                    <Check className="h-4 w-4 text-green-500 mt-0.5 mr-2 flex-shrink-0" />
+                    <span>Personal statement (500 words)</span>
+                  </li>
+                  <li className="flex items-start">
+                    <Check className="h-4 w-4 text-green-500 mt-0.5 mr-2 flex-shrink-0" />
+                    <span>Academic transcript or predicted grades</span>
+                  </li>
+                  <li className="flex items-start">
+                    <Check className="h-4 w-4 text-green-500 mt-0.5 mr-2 flex-shrink-0" />
+                    <span>One academic reference</span>
+                  </li>
+                  <li className="flex items-start">
+                    <Check className="h-4 w-4 text-green-500 mt-0.5 mr-2 flex-shrink-0" />
+                    <span>Proof of household income (if applicable)</span>
+                  </li>
+                </>
+              )}
             </ul>
           </div>
         </div>
