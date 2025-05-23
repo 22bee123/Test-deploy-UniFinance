@@ -31,8 +31,20 @@ const AuthCallback = () => {
         }
         
         if (session) {
-          // Redirect to dashboard on successful login
-          navigate('/dashboard');
+          // Check if user has already completed onboarding
+          const { data: profileData, error: profileError } = await supabase
+            .from('user_profiles')
+            .select('*')
+            .eq('user_id', session.user.id)
+            .single();
+          
+          if (profileData && !profileError) {
+            // User has completed onboarding, redirect to grants page
+            navigate('/grants');
+          } else {
+            // New user, redirect to onboarding
+            navigate('/onboarding');
+          }
         } else {
           // If no session, redirect to login
           navigate('/login');

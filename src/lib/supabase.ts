@@ -29,20 +29,20 @@ export const signInWithEmail = async (email: string, password: string) => {
 };
 
 export const signInWithGoogle = async () => {
-  // Determine the correct redirect URL based on the environment
+  // For OAuth to work properly with Supabase, we should redirect to the auth/callback route
+  // instead of directly to onboarding
   let redirectUrl;
   
   // Check if we're on localhost or a production URL
   if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
     // Local development
-    redirectUrl = `${window.location.origin}/onboarding`;
+    redirectUrl = `${window.location.origin}/auth/callback`;
   } else {
     // Production deployment (Vercel)
-    redirectUrl = `https://test-deploy-uni-finance.vercel.app/onboarding`;
-    
-    // If you have a specific Vercel URL, you can hardcode it here for extra safety
-    // redirectUrl = 'https://your-vercel-app-name.vercel.app/onboarding';
+    redirectUrl = `https://test-deploy-uni-finance.vercel.app/auth/callback`;
   }
+  
+  console.log('Redirecting to:', redirectUrl);
   
   return await supabase.auth.signInWithOAuth({
     provider: 'google',
