@@ -8,7 +8,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/components/ui/use-toast";
 import { Eye, EyeOff, ArrowLeft, CheckCircle2, Loader2 } from "lucide-react";
-import { signUpWithEmail, signInWithGoogle } from "@/lib/supabase";
+import { supabase, signUpWithEmail, signInWithGoogle } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
 
 const Signup = () => {
@@ -41,9 +41,38 @@ const Signup = () => {
   
   // Redirect if already logged in
   useEffect(() => {
-    if (user) {
-      navigate('/dashboard');
-    }
+    const checkUserStatus = async () => {
+      if (user) {
+        console.log('User detected in Signup component:', user);
+        
+        try {
+          // Check if user has already completed onboarding
+          const { data: profileData, error: profileError } = await supabase
+            .from('user_profiles')
+            .select('*')
+            .eq('user_id', user.id)
+            .single();
+          
+          console.log('Profile check in Signup:', profileData, profileError);
+          
+          if (profileData && !profileError) {
+            // User has completed onboarding, redirect to grants page
+            console.log('User has profile, redirecting to grants');
+            navigate('/grants');
+          } else {
+            // New user or incomplete profile, redirect to onboarding
+            console.log('New user or no profile, redirecting to onboarding');
+            navigate('/onboarding');
+          }
+        } catch (error) {
+          console.error('Error checking user profile in Signup:', error);
+          // Default to onboarding if there's an error
+          navigate('/onboarding');
+        }
+      }
+    };
+    
+    checkUserStatus();
   }, [user, navigate]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {

@@ -89,7 +89,31 @@ const Login = () => {
           title: "Login successful",
           description: "Welcome back!"
         });
-        navigate("/dashboard");
+        
+        try {
+          // Check if user has already completed onboarding
+          const { data: profileData, error: profileError } = await supabase
+            .from('user_profiles')
+            .select('*')
+            .eq('user_id', data.user.id)
+            .single();
+          
+          console.log('Profile check after email login:', profileData, profileError);
+          
+          if (profileData && !profileError) {
+            // User has completed onboarding, redirect to grants page
+            console.log('User has profile, redirecting to grants');
+            navigate('/grants');
+          } else {
+            // New user or incomplete profile, redirect to onboarding
+            console.log('New user or no profile, redirecting to onboarding');
+            navigate('/onboarding');
+          }
+        } catch (error) {
+          console.error('Error checking user profile after email login:', error);
+          // Default to onboarding if there's an error
+          navigate('/onboarding');
+        }
       }
     } catch (error) {
       console.error("Login exception:", error);
