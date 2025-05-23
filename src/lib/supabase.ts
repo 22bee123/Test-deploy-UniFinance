@@ -29,11 +29,26 @@ export const signInWithEmail = async (email: string, password: string) => {
 };
 
 export const signInWithGoogle = async () => {
+  // Determine the correct redirect URL based on the environment
+  let redirectUrl;
+  
+  // Check if we're on localhost or a production URL
+  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+    // Local development
+    redirectUrl = `${window.location.origin}/onboarding`;
+  } else {
+    // Production deployment (Vercel)
+    redirectUrl = `${window.location.origin}/onboarding`;
+    
+    // If you have a specific Vercel URL, you can hardcode it here for extra safety
+    // redirectUrl = 'https://your-vercel-app-name.vercel.app/onboarding';
+  }
+  
   return await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
       skipBrowserRedirect: false,
-      redirectTo: `${window.location.origin}/onboarding`,
+      redirectTo: redirectUrl,
       queryParams: {
         access_type: 'offline',
         prompt: 'consent'
