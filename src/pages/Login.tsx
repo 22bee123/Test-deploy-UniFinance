@@ -8,7 +8,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/components/ui/use-toast";
 import { Eye, EyeOff, ArrowLeft, Loader2 } from "lucide-react";
-import { signInWithEmail, signInWithGoogle } from "@/lib/supabase";
+import { supabase, signInWithEmail, signInWithGoogle } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
 
 const Login = () => {
@@ -36,18 +36,38 @@ const Login = () => {
   
   // Redirect if already logged in
   useEffect(() => {
-    if (user) {
-      // Check if the user is coming from a Google sign-in
-      const isNewUser = user.app_metadata?.provider === 'google' && 
-                       user.created_at === user.last_sign_in_at;
-      
-      // Redirect new Google users to onboarding, existing users to dashboard
-      if (isNewUser) {
-        navigate('/onboarding');
-      } else {
-        navigate('/dashboard');
+    const checkUserStatus = async () => {
+      if (user) {
+        console.log('User detected in Login component:', user);
+        
+        try {
+          // Check if user has already completed onboarding
+          const { data: profileData, error: profileError } = await supabase
+            .from('user_profiles')
+            .select('*')
+            .eq('user_id', user.id)
+            .single();
+          
+          console.log('Profile check:', profileData, profileError);
+          
+          if (profileData && !profileError) {
+            // User has completed onboarding, redirect to grants page
+            console.log('User has profile, redirecting to grants');
+            navigate('/grants');
+          } else {
+            // New user or incomplete profile, redirect to onboarding
+            console.log('New user or no profile, redirecting to onboarding');
+            navigate('/onboarding');
+          }
+        } catch (error) {
+          console.error('Error checking user profile:', error);
+          // Default to onboarding if there's an error
+          navigate('/onboarding');
+        }
       }
-    }
+    };
+    
+    checkUserStatus();
   }, [user, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
