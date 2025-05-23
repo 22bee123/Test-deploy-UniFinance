@@ -9,14 +9,20 @@ const AuthCallback = () => {
   useEffect(() => {
     // Handle the OAuth callback
     const handleAuthCallback = async () => {
+      console.log('AuthCallback: Starting OAuth callback handling');
+      console.log('URL params:', window.location.href);
+      
       try {
         // For Supabase OAuth, the auth server should handle the callback automatically
         // We just need to check if the session exists and redirect accordingly
+        console.log('AuthCallback: Getting session...');
         const { data: { session }, error } = await supabase.auth.getSession();
+        console.log('AuthCallback: Session result:', session ? 'Session found' : 'No session', error ? `Error: ${error.message}` : 'No error');
         
         // Check for error in the URL (e.g., access_denied)
         const errorParam = searchParams.get('error');
         const errorDescription = searchParams.get('error_description');
+        console.log('AuthCallback: URL error params:', errorParam, errorDescription);
         
         if (errorParam) {
           console.error('OAuth error:', errorParam, errorDescription);
@@ -31,18 +37,28 @@ const AuthCallback = () => {
         }
         
         if (session) {
+          console.log('AuthCallback: User authenticated:', session.user.id);
+          
           // Check if user has already completed onboarding
+          console.log('AuthCallback: Checking if user has profile...');
           const { data: profileData, error: profileError } = await supabase
             .from('user_profiles')
             .select('*')
             .eq('user_id', session.user.id)
             .single();
           
+          console.log('AuthCallback: Profile check result:', 
+            profileData ? 'Profile found' : 'No profile', 
+            profileError ? `Error: ${profileError.message}` : 'No error'
+          );
+          
           if (profileData && !profileError) {
             // User has completed onboarding, redirect to grants page
+            console.log('AuthCallback: Redirecting to grants page');
             navigate('/grants');
           } else {
             // New user, redirect to onboarding
+            console.log('AuthCallback: Redirecting to onboarding');
             navigate('/onboarding');
           }
         } else {
