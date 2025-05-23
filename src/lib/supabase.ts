@@ -39,22 +39,29 @@ export const signInWithGoogle = async () => {
     redirectUrl = `${window.location.origin}/auth/callback`;
   } else {
     // Production deployment (Vercel)
+    // Use the exact URL format that matches your Vercel deployment
     redirectUrl = `https://test-deploy-uni-finance.vercel.app/auth/callback`;
   }
   
   console.log('Redirecting to:', redirectUrl);
   
-  return await supabase.auth.signInWithOAuth({
-    provider: 'google',
-    options: {
-      skipBrowserRedirect: false,
-      redirectTo: redirectUrl,
-      queryParams: {
-        access_type: 'offline',
-        prompt: 'consent'
+  try {
+    // Use signInWithOAuth and specify the full URL path
+    return await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        skipBrowserRedirect: false,
+        redirectTo: redirectUrl,
+        queryParams: {
+          access_type: 'offline',
+          prompt: 'consent',
+        }
       }
-    }
-  });
+    });
+  } catch (error) {
+    console.error('Error during Google sign-in:', error);
+    throw error;
+  }
 };
 
 export const signOut = async () => {
