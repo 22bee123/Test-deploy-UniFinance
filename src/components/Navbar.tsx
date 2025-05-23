@@ -67,7 +67,18 @@ const Navbar = () => {
                 Home
               </Link>
               
-
+              <Link 
+                to="/grants-and-funding" 
+                className={cn(
+                  "inline-flex items-center px-1 pt-1 text-sm font-medium border-b-2",
+                  isActive("/grants") || isActive("/grants-and-funding")
+                    ? "border-uni-purple-500 text-uni-purple-700" 
+                    : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700"
+                )}
+              >
+                <CircleDollarSign className="mr-2 h-4 w-4" />
+                Grants & Funding
+              </Link>
               
               <Link 
                 to="/pricing" 

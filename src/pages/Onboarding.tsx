@@ -582,6 +582,7 @@ const Onboarding = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -600,14 +601,44 @@ const Onboarding = () => {
   
   useEffect(() => {
     const getUserId = async () => {
-      const { data } = await supabase.auth.getUser();
-      if (data?.user) {
-        setUserId(data.user.id);
+      setIsLoading(true);
+      try {
+        // Get current user
+        const { data } = await supabase.auth.getUser();
+        if (data?.user) {
+          setUserId(data.user.id);
+          
+          // Check if user has already completed onboarding
+          const { data: profileData, error: profileError } = await supabase
+            .from('user_profiles')
+            .select('*')
+            .eq('user_id', data.user.id)
+            .single();
+            
+          if (profileData && !profileError) {
+            // User has already completed onboarding, redirect to grants page
+            console.log('User already onboarded, redirecting to grants page');
+            navigate('/grants');
+            return;
+          }
+          
+          // Pre-fill email if available
+          if (data.user.email) {
+            setFormData(prev => ({
+              ...prev,
+              email: data.user.email
+            }));
+          }
+        }
+      } catch (error) {
+        console.error('Error checking user status:', error);
+      } finally {
+        setIsLoading(false);
       }
     };
     
     getUserId();
-  }, []);
+  }, [navigate]);
   
   const nextStep = () => {
     // Simple validation for step 2
@@ -715,29 +746,38 @@ const Onboarding = () => {
       
       <main className="flex-grow py-8 md:py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Progress indicator */}
-          {step < 5 && (
-            <div className="mb-8 max-w-lg mx-auto">
-              <div className="flex justify-between text-sm mb-2">
-                <span className="font-medium">Get Started</span>
-                <span className="font-medium">Complete</span>
-              </div>
-              <Progress value={(step / 4) * 100} className="h-2" />
-              <div className="flex justify-between text-xs text-muted-foreground mt-2">
-                <span>Step {step} of 4</span>
-                <span>{Math.round((step / 4) * 100)}% complete</span>
-              </div>
+          {isLoading ? (
+            <div className="flex flex-col items-center justify-center py-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-uni-purple-600 mb-4"></div>
+              <p className="text-uni-purple-700 font-medium">Checking your account status...</p>
             </div>
+          ) : (
+            <>
+              {/* Progress indicator */}
+              {step < 5 && (
+                <div className="mb-8 max-w-lg mx-auto">
+                  <div className="flex justify-between text-sm mb-2">
+                    <span className="font-medium">Get Started</span>
+                    <span className="font-medium">Complete</span>
+                  </div>
+                  <Progress value={(step / 4) * 100} className="h-2" />
+                  <div className="flex justify-between text-xs text-muted-foreground mt-2">
+                    <span>Step {step} of 4</span>
+                    <span>{Math.round((step / 4) * 100)}% complete</span>
+                  </div>
+                </div>
+              )}
+              
+              {/* Step content */}
+              <div className="mt-8">
+                {step === 1 && <OnboardingStep1 onNext={nextStep} />}
+                {step === 2 && <OnboardingStep2 onNext={nextStep} onBack={prevStep} formData={formData} setFormData={setFormData} />}
+                {step === 3 && <OnboardingStep3 onNext={nextStep} onBack={prevStep} formData={formData} setFormData={setFormData} />}
+                {step === 4 && <OnboardingStep4 onFinish={finishOnboarding} onBack={prevStep} formData={formData} setFormData={setFormData} />}
+                {step === 5 && <OnboardingComplete />}
+              </div>
+            </>
           )}
-          
-          {/* Step content */}
-          <div className="mt-8">
-            {step === 1 && <OnboardingStep1 onNext={nextStep} />}
-            {step === 2 && <OnboardingStep2 onNext={nextStep} onBack={prevStep} formData={formData} setFormData={setFormData} />}
-            {step === 3 && <OnboardingStep3 onNext={nextStep} onBack={prevStep} formData={formData} setFormData={setFormData} />}
-            {step === 4 && <OnboardingStep4 onFinish={finishOnboarding} onBack={prevStep} formData={formData} setFormData={setFormData} />}
-            {step === 5 && <OnboardingComplete />}
-          </div>
         </div>
       </main>
       
