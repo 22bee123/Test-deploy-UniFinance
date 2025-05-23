@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -15,7 +15,10 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Link, useNavigate } from "react-router-dom";
-import { ChevronRight, ChevronLeft, Check, BookOpen, GraduationCap, Pound, Award, School } from "lucide-react";
+import { ChevronRight, ChevronLeft, Check, BookOpen, GraduationCap, PoundSterling, Award, School } from "lucide-react";
+import { supabase } from "@/lib/supabase";
+import { useToast } from "@/components/ui/use-toast";
+import { Toaster } from "@/components/ui/toaster";
 
 const OnboardingStep1 = ({ onNext }: { onNext: () => void }) => {
   return (
@@ -78,7 +81,7 @@ const OnboardingStep1 = ({ onNext }: { onNext: () => void }) => {
   );
 };
 
-const OnboardingStep2 = ({ onNext, onBack }: { onNext: () => void; onBack: () => void }) => {
+const OnboardingStep2 = ({ onNext, onBack, formData, setFormData }: { onNext: () => void; onBack: () => void; formData: any; setFormData: (data: any) => void }) => {
   return (
     <Card className="w-full max-w-lg mx-auto">
       <CardHeader>
@@ -91,22 +94,44 @@ const OnboardingStep2 = ({ onNext, onBack }: { onNext: () => void; onBack: () =>
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label htmlFor="first-name">First name</Label>
-            <Input id="first-name" placeholder="Enter your first name" />
+            <Input 
+              id="first-name" 
+              placeholder="Enter your first name" 
+              value={formData.firstName || ''}
+              onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+              required
+            />
           </div>
           <div className="space-y-2">
             <Label htmlFor="last-name">Last name</Label>
-            <Input id="last-name" placeholder="Enter your last name" />
+            <Input 
+              id="last-name" 
+              placeholder="Enter your last name" 
+              value={formData.lastName || ''}
+              onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+              required
+            />
           </div>
         </div>
         
         <div className="space-y-2">
           <Label htmlFor="email">Email address</Label>
-          <Input id="email" type="email" placeholder="Enter your email address" />
+          <Input 
+            id="email" 
+            type="email" 
+            placeholder="Enter your email address" 
+            value={formData.email || ''}
+            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+            required
+          />
         </div>
         
         <div className="space-y-2">
           <Label>Your current status</Label>
-          <RadioGroup defaultValue="undergraduate">
+          <RadioGroup 
+            value={formData.educationLevel || "undergraduate"}
+            onValueChange={(value) => setFormData({ ...formData, educationLevel: value })}
+          >
             <div className="flex items-center space-x-2">
               <RadioGroupItem value="pre-university" id="pre-university" />
               <Label htmlFor="pre-university">Pre-University</Label>
@@ -128,12 +153,24 @@ const OnboardingStep2 = ({ onNext, onBack }: { onNext: () => void; onBack: () =>
         
         <div className="space-y-2">
           <Label htmlFor="university">University (Current or Planned)</Label>
-          <Input id="university" placeholder="Enter university name" />
+          <Input 
+            id="university" 
+            placeholder="Enter university name" 
+            value={formData.university || ''}
+            onChange={(e) => setFormData({ ...formData, university: e.target.value })}
+            required
+          />
         </div>
         
         <div className="space-y-2">
           <Label htmlFor="subject">Field of Study</Label>
-          <Input id="subject" placeholder="Enter your subject or course" />
+          <Input 
+            id="subject" 
+            placeholder="Enter your subject or course" 
+            value={formData.fieldOfStudy || ''}
+            onChange={(e) => setFormData({ ...formData, fieldOfStudy: e.target.value })}
+            required
+          />
         </div>
       </CardContent>
       <CardFooter className="flex justify-between">
@@ -148,7 +185,7 @@ const OnboardingStep2 = ({ onNext, onBack }: { onNext: () => void; onBack: () =>
   );
 };
 
-const OnboardingStep3 = ({ onNext, onBack }: { onNext: () => void; onBack: () => void }) => {
+const OnboardingStep3 = ({ onNext, onBack, formData, setFormData }: { onNext: () => void; onBack: () => void; formData: any; setFormData: (data: any) => void }) => {
   return (
     <Card className="w-full max-w-lg mx-auto">
       <CardHeader>
@@ -162,23 +199,83 @@ const OnboardingStep3 = ({ onNext, onBack }: { onNext: () => void; onBack: () =>
           <Label>What type of funding are you looking for?</Label>
           <div className="space-y-2">
             <div className="flex items-center space-x-2">
-              <Checkbox id="type-scholarship" />
+              <Checkbox 
+                id="type-scholarship" 
+                checked={formData.fundingTypes?.includes('scholarship') || false}
+                onCheckedChange={(checked) => {
+                  const types = formData.fundingTypes || [];
+                  setFormData({
+                    ...formData,
+                    fundingTypes: checked 
+                      ? [...types, 'scholarship']
+                      : types.filter((t: string) => t !== 'scholarship')
+                  });
+                }}
+              />
               <Label htmlFor="type-scholarship">Scholarships</Label>
             </div>
             <div className="flex items-center space-x-2">
-              <Checkbox id="type-grant" />
+              <Checkbox 
+                id="type-grant" 
+                checked={formData.fundingTypes?.includes('grant') || false}
+                onCheckedChange={(checked) => {
+                  const types = formData.fundingTypes || [];
+                  setFormData({
+                    ...formData,
+                    fundingTypes: checked 
+                      ? [...types, 'grant']
+                      : types.filter((t: string) => t !== 'grant')
+                  });
+                }}
+              />
               <Label htmlFor="type-grant">Grants</Label>
             </div>
             <div className="flex items-center space-x-2">
-              <Checkbox id="type-bursary" />
+              <Checkbox 
+                id="type-bursary" 
+                checked={formData.fundingTypes?.includes('bursary') || false}
+                onCheckedChange={(checked) => {
+                  const types = formData.fundingTypes || [];
+                  setFormData({
+                    ...formData,
+                    fundingTypes: checked 
+                      ? [...types, 'bursary']
+                      : types.filter((t: string) => t !== 'bursary')
+                  });
+                }}
+              />
               <Label htmlFor="type-bursary">Bursaries</Label>
             </div>
             <div className="flex items-center space-x-2">
-              <Checkbox id="type-prize" />
+              <Checkbox 
+                id="type-prize" 
+                checked={formData.fundingTypes?.includes('prize') || false}
+                onCheckedChange={(checked) => {
+                  const types = formData.fundingTypes || [];
+                  setFormData({
+                    ...formData,
+                    fundingTypes: checked 
+                      ? [...types, 'prize']
+                      : types.filter((t: string) => t !== 'prize')
+                  });
+                }}
+              />
               <Label htmlFor="type-prize">Prizes & Awards</Label>
             </div>
             <div className="flex items-center space-x-2">
-              <Checkbox id="type-hardship" />
+              <Checkbox 
+                id="type-hardship" 
+                checked={formData.fundingTypes?.includes('hardship') || false}
+                onCheckedChange={(checked) => {
+                  const types = formData.fundingTypes || [];
+                  setFormData({
+                    ...formData,
+                    fundingTypes: checked 
+                      ? [...types, 'hardship']
+                      : types.filter((t: string) => t !== 'hardship')
+                  });
+                }}
+              />
               <Label htmlFor="type-hardship">Hardship Funds</Label>
             </div>
           </div>
@@ -188,27 +285,99 @@ const OnboardingStep3 = ({ onNext, onBack }: { onNext: () => void; onBack: () =>
           <Label>Eligibility factors that apply to you</Label>
           <div className="grid grid-cols-2 gap-2">
             <div className="flex items-center space-x-2">
-              <Checkbox id="eligible-academic" />
+              <Checkbox 
+                id="eligible-academic" 
+                checked={formData.eligibilityFactors?.includes('academic') || false}
+                onCheckedChange={(checked) => {
+                  const factors = formData.eligibilityFactors || [];
+                  setFormData({
+                    ...formData,
+                    eligibilityFactors: checked 
+                      ? [...factors, 'academic']
+                      : factors.filter((f: string) => f !== 'academic')
+                  });
+                }}
+              />
               <Label htmlFor="eligible-academic">Academic Merit</Label>
             </div>
             <div className="flex items-center space-x-2">
-              <Checkbox id="eligible-financial" />
+              <Checkbox 
+                id="eligible-financial" 
+                checked={formData.eligibilityFactors?.includes('financial') || false}
+                onCheckedChange={(checked) => {
+                  const factors = formData.eligibilityFactors || [];
+                  setFormData({
+                    ...formData,
+                    eligibilityFactors: checked 
+                      ? [...factors, 'financial']
+                      : factors.filter((f: string) => f !== 'financial')
+                  });
+                }}
+              />
               <Label htmlFor="eligible-financial">Financial Need</Label>
             </div>
             <div className="flex items-center space-x-2">
-              <Checkbox id="eligible-firstgen" />
+              <Checkbox 
+                id="eligible-firstgen" 
+                checked={formData.eligibilityFactors?.includes('firstgen') || false}
+                onCheckedChange={(checked) => {
+                  const factors = formData.eligibilityFactors || [];
+                  setFormData({
+                    ...formData,
+                    eligibilityFactors: checked 
+                      ? [...factors, 'firstgen']
+                      : factors.filter((f: string) => f !== 'firstgen')
+                  });
+                }}
+              />
               <Label htmlFor="eligible-firstgen">First Generation</Label>
             </div>
             <div className="flex items-center space-x-2">
-              <Checkbox id="eligible-international" />
+              <Checkbox 
+                id="eligible-international" 
+                checked={formData.eligibilityFactors?.includes('international') || false}
+                onCheckedChange={(checked) => {
+                  const factors = formData.eligibilityFactors || [];
+                  setFormData({
+                    ...formData,
+                    eligibilityFactors: checked 
+                      ? [...factors, 'international']
+                      : factors.filter((f: string) => f !== 'international')
+                  });
+                }}
+              />
               <Label htmlFor="eligible-international">International</Label>
             </div>
             <div className="flex items-center space-x-2">
-              <Checkbox id="eligible-disability" />
+              <Checkbox 
+                id="eligible-disability" 
+                checked={formData.eligibilityFactors?.includes('disability') || false}
+                onCheckedChange={(checked) => {
+                  const factors = formData.eligibilityFactors || [];
+                  setFormData({
+                    ...formData,
+                    eligibilityFactors: checked 
+                      ? [...factors, 'disability']
+                      : factors.filter((f: string) => f !== 'disability')
+                  });
+                }}
+              />
               <Label htmlFor="eligible-disability">Disability</Label>
             </div>
             <div className="flex items-center space-x-2">
-              <Checkbox id="eligible-location" />
+              <Checkbox 
+                id="eligible-location" 
+                checked={formData.eligibilityFactors?.includes('location') || false}
+                onCheckedChange={(checked) => {
+                  const factors = formData.eligibilityFactors || [];
+                  setFormData({
+                    ...formData,
+                    eligibilityFactors: checked 
+                      ? [...factors, 'location']
+                      : factors.filter((f: string) => f !== 'location')
+                  });
+                }}
+              />
               <Label htmlFor="eligible-location">Location Based</Label>
             </div>
           </div>
@@ -216,7 +385,10 @@ const OnboardingStep3 = ({ onNext, onBack }: { onNext: () => void; onBack: () =>
         
         <div className="space-y-2">
           <Label>Minimum funding amount you're looking for</Label>
-          <RadioGroup defaultValue="any">
+          <RadioGroup 
+            value={formData.minimumAmount || "any"}
+            onValueChange={(value) => setFormData({ ...formData, minimumAmount: value })}
+          >
             <div className="flex items-center space-x-2">
               <RadioGroupItem value="any" id="amount-any" />
               <Label htmlFor="amount-any">Any amount</Label>
@@ -248,7 +420,7 @@ const OnboardingStep3 = ({ onNext, onBack }: { onNext: () => void; onBack: () =>
   );
 };
 
-const OnboardingStep4 = ({ onFinish, onBack }: { onFinish: () => void; onBack: () => void }) => {
+const OnboardingStep4 = ({ onFinish, onBack, formData, setFormData }: { onFinish: () => void; onBack: () => void; formData: any; setFormData: (data: any) => void }) => {
   return (
     <Card className="w-full max-w-lg mx-auto">
       <CardHeader>
@@ -258,7 +430,11 @@ const OnboardingStep4 = ({ onFinish, onBack }: { onFinish: () => void; onBack: (
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        <RadioGroup defaultValue="premium" className="space-y-4">
+        <RadioGroup 
+          value={formData.selectedPlan || "premium"} 
+          onValueChange={(value) => setFormData({ ...formData, selectedPlan: value })}
+          className="space-y-4"
+        >
           <div className="relative">
             <div className="absolute -right-1 -top-1 bg-uni-purple-600 text-white text-xs font-bold px-2 py-1 rounded-full">
               BEST VALUE
@@ -404,8 +580,60 @@ const OnboardingComplete = () => {
 const Onboarding = () => {
   const [step, setStep] = useState(1);
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    educationLevel: 'undergraduate',
+    university: '',
+    fieldOfStudy: '',
+    fundingTypes: ['scholarship', 'grant'],
+    eligibilityFactors: [],
+    minimumAmount: 'any',
+    selectedPlan: 'premium'
+  });
+  
+  // Get current user
+  const [userId, setUserId] = useState<string | null>(null);
+  
+  useEffect(() => {
+    const getUserId = async () => {
+      const { data } = await supabase.auth.getUser();
+      if (data?.user) {
+        setUserId(data.user.id);
+      }
+    };
+    
+    getUserId();
+  }, []);
   
   const nextStep = () => {
+    // Simple validation for step 2
+    if (step === 2) {
+      if (!formData.firstName || !formData.lastName || !formData.email || !formData.university || !formData.fieldOfStudy) {
+        toast({
+          title: "Missing information",
+          description: "Please fill in all required fields",
+          variant: "destructive"
+        });
+        return;
+      }
+    }
+    
+    // Simple validation for step 3
+    if (step === 3) {
+      if (!formData.fundingTypes || formData.fundingTypes.length === 0) {
+        toast({
+          title: "Missing information",
+          description: "Please select at least one funding type",
+          variant: "destructive"
+        });
+        return;
+      }
+    }
+    
     setStep(step + 1);
   };
   
@@ -413,10 +641,63 @@ const Onboarding = () => {
     setStep(step - 1);
   };
   
-  const finishOnboarding = () => {
-    // Implement payment processing or redirect
-    setStep(5);
-    // Eventually navigate to grants page
+  const finishOnboarding = async () => {
+    if (!userId) {
+      toast({
+        title: "Authentication error",
+        description: "Please sign in to continue",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    setIsSubmitting(true);
+    
+    try {
+      // Store user profile data in Supabase
+      const { error } = await supabase
+        .from('user_profiles')
+        .upsert({
+          user_id: userId,
+          first_name: formData.firstName,
+          last_name: formData.lastName,
+          email: formData.email,
+          education_level: formData.educationLevel,
+          university: formData.university,
+          field_of_study: formData.fieldOfStudy,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        });
+      
+      if (error) throw error;
+      
+      // Store funding preferences in Supabase
+      const { error: prefError } = await supabase
+        .from('funding_preferences')
+        .upsert({
+          user_id: userId,
+          funding_types: formData.fundingTypes,
+          eligibility_factors: formData.eligibilityFactors,
+          minimum_amount: formData.minimumAmount,
+          selected_plan: formData.selectedPlan,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        });
+      
+      if (prefError) throw prefError;
+      
+      // Success - move to completion step
+      setStep(5);
+    } catch (error: any) {
+      console.error('Error saving onboarding data:', error);
+      toast({
+        title: "Error saving your information",
+        description: error.message || "Please try again later",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
   
   return (
@@ -452,9 +733,9 @@ const Onboarding = () => {
           {/* Step content */}
           <div className="mt-8">
             {step === 1 && <OnboardingStep1 onNext={nextStep} />}
-            {step === 2 && <OnboardingStep2 onNext={nextStep} onBack={prevStep} />}
-            {step === 3 && <OnboardingStep3 onNext={nextStep} onBack={prevStep} />}
-            {step === 4 && <OnboardingStep4 onFinish={finishOnboarding} onBack={prevStep} />}
+            {step === 2 && <OnboardingStep2 onNext={nextStep} onBack={prevStep} formData={formData} setFormData={setFormData} />}
+            {step === 3 && <OnboardingStep3 onNext={nextStep} onBack={prevStep} formData={formData} setFormData={setFormData} />}
+            {step === 4 && <OnboardingStep4 onFinish={finishOnboarding} onBack={prevStep} formData={formData} setFormData={setFormData} />}
             {step === 5 && <OnboardingComplete />}
           </div>
         </div>
@@ -463,6 +744,7 @@ const Onboarding = () => {
       <footer className="py-4 text-center text-sm text-muted-foreground">
         <p>© 2025 UniFinance. All rights reserved.</p>
       </footer>
+      <Toaster />
     </div>
   );
 };

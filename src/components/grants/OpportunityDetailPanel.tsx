@@ -5,7 +5,7 @@ import {
   CalendarCheck, PoundSterling, Check, Bookmark, Share, ExternalLink, 
   FileText, X, Award, Info
 } from "lucide-react";
-import { format, parseISO } from "date-fns";
+import { format, parseISO, parse, isValid } from "date-fns";
 import { useState } from "react";
 
 interface OpportunityDetailPanelProps {
@@ -14,7 +14,41 @@ interface OpportunityDetailPanelProps {
 }
 
 const OpportunityDetailPanel = ({ opportunity, onClose }: OpportunityDetailPanelProps) => {
-  const deadlineDate = parseISO(opportunity.deadline);
+  // Parse the deadline date safely with fallback options
+  const parseDeadline = (dateString: string) => {
+    try {
+      // Try to parse as ISO format first
+      if (dateString.match(/^\d{4}-\d{2}-\d{2}/)) {
+        const date = parseISO(dateString);
+        if (isValid(date)) return date;
+      }
+      
+      // Try to parse as UK date format (dd/mm/yyyy or dd-mm-yyyy)
+      if (dateString.match(/^\d{1,2}[\/\-]\d{1,2}[\/\-]\d{4}$/)) {
+        const date = parse(dateString, 'dd/MM/yyyy', new Date());
+        if (isValid(date)) return date;
+      }
+      
+      // Try to parse as text date format (e.g., "15 January 2026")
+      if (dateString.match(/^\d{1,2}\s+[A-Za-z]+\s+\d{4}$/)) {
+        const date = parse(dateString, 'd MMMM yyyy', new Date());
+        if (isValid(date)) return date;
+      }
+      
+      // Default fallback - future date
+      const futureDate = new Date();
+      futureDate.setMonth(futureDate.getMonth() + 3); // 3 months in the future
+      return futureDate;
+    } catch (error) {
+      console.warn('Failed to parse date:', dateString, error);
+      // Fallback to a future date
+      const futureDate = new Date();
+      futureDate.setMonth(futureDate.getMonth() + 3); // 3 months in the future
+      return futureDate;
+    }
+  };
+  
+  const deadlineDate = parseDeadline(opportunity.deadline);
   const [isRedirecting, setIsRedirecting] = useState(false);
   
   const getBadgeVariant = (type: string) => {
@@ -32,10 +66,15 @@ const OpportunityDetailPanel = ({ opportunity, onClose }: OpportunityDetailPanel
   
   // Function to calculate days remaining until deadline
   const getDaysRemaining = () => {
-    const today = new Date();
-    const differenceInTime = deadlineDate.getTime() - today.getTime();
-    const differenceInDays = Math.ceil(differenceInTime / (1000 * 3600 * 24));
-    return differenceInDays;
+    try {
+      const today = new Date();
+      const differenceInTime = deadlineDate.getTime() - today.getTime();
+      const differenceInDays = Math.ceil(differenceInTime / (1000 * 3600 * 24));
+      return differenceInDays;
+    } catch (error) {
+      console.warn('Error calculating days remaining:', error);
+      return 30; // Default to 30 days if calculation fails
+    }
   };
   
   // Function to generate the appropriate application URL based on the opportunity
@@ -217,7 +256,11 @@ const OpportunityDetailPanel = ({ opportunity, onClose }: OpportunityDetailPanel
           <div className="flex items-center">
             <CalendarCheck className="h-5 w-5 text-muted-foreground mr-2" />
             <div>
-              <span className="text-sm block">{format(deadlineDate, 'dd MMM yyyy')}</span>
+              <span className="text-sm block">
+                {isValid(deadlineDate) 
+                  ? format(deadlineDate, 'dd MMM yyyy')
+                  : opportunity.deadline || 'Deadline available on website'}
+              </span>
               <span className={`text-xs ${daysRemaining <= 14 ? "text-red-500 font-medium" : "text-muted-foreground"}`}>
                 {daysRemaining > 0 ? `${daysRemaining} days left` : "Deadline passed"}
               </span>
