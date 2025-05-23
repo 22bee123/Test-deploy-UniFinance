@@ -38,7 +38,7 @@ export const signInWithGoogle = async () => {
     redirectUrl = `${window.location.origin}/onboarding`;
   } else {
     // Production deployment (Vercel)
-    redirectUrl = `${window.location.origin}/onboarding`;
+    redirectUrl = `https://test-deploy-uni-finance.vercel.app/onboarding`;
     
     // If you have a specific Vercel URL, you can hardcode it here for extra safety
     // redirectUrl = 'https://your-vercel-app-name.vercel.app/onboarding';
