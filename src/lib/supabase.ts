@@ -8,7 +8,15 @@ if (!supabaseUrl || !supabaseAnonKey) {
   console.error('Supabase URL or Anon Key is missing. Please check your environment variables.');
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// Create the Supabase client with specific options for better auth handling
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: true,
+    flowType: 'implicit'
+  }
+});
 
 // Auth helper functions
 export const signUpWithEmail = async (email: string, password: string, metadata?: any) => {
@@ -29,32 +37,27 @@ export const signInWithEmail = async (email: string, password: string) => {
 };
 
 export const signInWithGoogle = async () => {
-  // For OAuth to work properly with Supabase, we should redirect to the auth/callback route
-  // instead of directly to onboarding
-  let redirectUrl;
+  // Simplified approach for both local and production environments
+  const isProduction = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
   
-  // Check if we're on localhost or a production URL
-  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-    // Local development
-    redirectUrl = `${window.location.origin}/auth/callback`;
-  } else {
-    // Production deployment (Vercel)
-    // Use the exact URL format that matches your Vercel deployment
-    redirectUrl = `https://test-deploy-uni-finance.vercel.app/auth/callback`;
+  // Always use the current origin for local development
+  let redirectUrl = `${window.location.origin}/auth/callback`;
+  
+  // For production (Vercel), use the exact URL
+  if (isProduction) {
+    redirectUrl = 'https://test-deploy-uni-finance.vercel.app/auth/callback';
   }
   
-  console.log('Redirecting to:', redirectUrl);
+  console.log(`Google Sign-In: Environment=${isProduction ? 'Production' : 'Development'}, Redirecting to: ${redirectUrl}`);
   
   try {
-    // Use signInWithOAuth and specify the full URL path
+    // Use signInWithOAuth with minimal options
     return await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        skipBrowserRedirect: false,
         redirectTo: redirectUrl,
         queryParams: {
-          access_type: 'offline',
-          prompt: 'consent',
+          prompt: 'select_account' // Force account selection every time
         }
       }
     });
