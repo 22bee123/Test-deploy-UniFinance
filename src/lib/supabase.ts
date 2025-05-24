@@ -37,32 +37,48 @@ export const signInWithEmail = async (email: string, password: string) => {
 };
 
 export const signInWithGoogle = async () => {
-  // Simplified approach for both local and production environments
-  const isProduction = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
+  // Get the current hostname to determine environment
+  const hostname = window.location.hostname;
+  const isProduction = hostname !== 'localhost' && hostname !== '127.0.0.1';
   
-  // Always use the current origin for local development
-  let redirectUrl = `${window.location.origin}/auth/callback`;
-  
-  // For production (Vercel), use the exact URL
+  // Determine the base URL based on the environment
+  let baseUrl;
   if (isProduction) {
-    redirectUrl = 'https://test-deploy-uni-finance.vercel.app/auth/callback';
+    // Use the exact production URL
+    baseUrl = 'https://test-deploy-uni-finance.vercel.app';
+  } else {
+    // Use the current origin for local development
+    baseUrl = window.location.origin;
   }
   
-  console.log(`Google Sign-In: Environment=${isProduction ? 'Production' : 'Development'}, Redirecting to: ${redirectUrl}`);
+  // Create the full redirect URL
+  const redirectUrl = `${baseUrl}/auth/callback`;
+  
+  // Log the environment and redirect URL for debugging
+  console.log(`Google Sign-In: Environment=${isProduction ? 'Production' : 'Development'}`);
+  console.log(`Hostname: ${hostname}`);
+  console.log(`Redirect URL: ${redirectUrl}`);
   
   try {
-    // Use signInWithOAuth with minimal options
-    return await supabase.auth.signInWithOAuth({
+    // Use a more direct approach with fewer options
+    const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
         redirectTo: redirectUrl,
-        queryParams: {
-          prompt: 'select_account' // Force account selection every time
-        }
+        skipBrowserRedirect: false // Ensure browser redirects happen
       }
     });
+    
+    console.log('Sign-in initiated:', data);
+    
+    if (error) {
+      console.error('Error during Google sign-in:', error);
+      throw error;
+    }
+    
+    return { data, error };
   } catch (error) {
-    console.error('Error during Google sign-in:', error);
+    console.error('Exception during Google sign-in:', error);
     throw error;
   }
 };

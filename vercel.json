@@ -3,10 +3,29 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "routes": [
+    { 
+      "src": "/auth/callback", 
+      "dest": "/index.html", 
+      "status": 200 
+    },
+    { 
+      "src": "/onboarding", 
+      "dest": "/index.html", 
+      "status": 200 
+    },
+    { 
+      "src": "/grants", 
+      "dest": "/index.html", 
+      "status": 200 
+    },
     {
       "src": "/[^.]+",
-      "dest": "/",
+      "dest": "/index.html",
       "status": 200
     }
-  ]
+  ],
+  "env": {
+    "VITE_SUPABASE_URL": "${VITE_SUPABASE_URL}",
+    "VITE_SUPABASE_ANON_KEY": "${VITE_SUPABASE_ANON_KEY}"
+  }
 }
