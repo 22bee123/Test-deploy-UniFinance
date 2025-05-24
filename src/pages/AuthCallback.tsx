@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
-import { supabase } from '@/lib/supabase';
+import { supabase, getCurrentUser, getSession } from '@/lib/supabase';
 
 const AuthCallback = () => {
   const navigate = useNavigate();
@@ -15,6 +15,7 @@ const AuthCallback = () => {
       console.log('AuthCallback: Starting OAuth callback handling');
       console.log('URL params:', window.location.href);
       console.log('Location state:', location);
+      console.log('Is Vercel deployment:', window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1');
       
       setIsProcessing(true);
       setError(null);
@@ -36,11 +37,63 @@ const AuthCallback = () => {
         // We need to explicitly get the session to ensure it's available
         console.log('AuthCallback: Getting session...');
         
-        // Small delay to ensure Supabase has processed the OAuth callback
-        await new Promise(resolve => setTimeout(resolve, 500));
+        // Longer delay for Vercel deployment
+        const isVercel = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
+        await new Promise(resolve => setTimeout(resolve, isVercel ? 1500 : 500));
         
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        console.log('AuthCallback: Session result:', 
+        // Try multiple ways to get the session
+        let session = null;
+        let sessionError = null;
+        
+        // First attempt - getSession
+        try {
+          const sessionResult = await getSession();
+          if (sessionResult) {
+            session = sessionResult;
+            console.log('AuthCallback: Session found via getSession');
+          }
+        } catch (error) {
+          console.error('Error getting session via getSession:', error);
+        }
+        
+        // Second attempt - supabase.auth.getSession
+        if (!session) {
+          try {
+            const { data, error } = await supabase.auth.getSession();
+            if (data?.session) {
+              session = data.session;
+              console.log('AuthCallback: Session found via supabase.auth.getSession');
+            }
+            if (error) sessionError = error;
+          } catch (error) {
+            console.error('Error getting session via supabase.auth.getSession:', error);
+          }
+        }
+        
+        // Third attempt - check URL for access_token
+        if (!session && window.location.hash) {
+          console.log('Checking URL hash for access_token');
+          const hashParams = new URLSearchParams(window.location.hash.substring(1));
+          const accessToken = hashParams.get('access_token');
+          if (accessToken) {
+            console.log('Found access_token in URL hash, attempting to set session');
+            try {
+              const { data, error } = await supabase.auth.setSession({
+                access_token: accessToken,
+                refresh_token: hashParams.get('refresh_token') || '',
+              });
+              if (data?.session) {
+                session = data.session;
+                console.log('AuthCallback: Session set via access_token in URL');
+              }
+              if (error) sessionError = error;
+            } catch (error) {
+              console.error('Error setting session from URL hash:', error);
+            }
+          }
+        }
+        
+        console.log('AuthCallback: Final session result:', 
           session ? 'Session found' : 'No session', 
           sessionError ? `Error: ${sessionError.message}` : 'No error'
         );
@@ -77,14 +130,28 @@ const AuthCallback = () => {
         // Force a small delay to ensure state is updated
         await new Promise(resolve => setTimeout(resolve, 300));
         
-        if (profileData && !profileError) {
-          // User has completed onboarding, redirect to grants page
-          console.log('AuthCallback: Redirecting to grants page');
-          navigate('/grants', { replace: true });
+        // On Vercel, use window.location.href for more reliable navigation
+        if (isVercel) {
+          if (profileData && !profileError) {
+            // User has completed onboarding, redirect to grants page
+            console.log('AuthCallback: Redirecting to grants page via window.location');
+            window.location.href = '/grants';
+          } else {
+            // New user, redirect to onboarding
+            console.log('AuthCallback: Redirecting to onboarding via window.location');
+            window.location.href = '/onboarding';
+          }
         } else {
-          // New user, redirect to onboarding
-          console.log('AuthCallback: Redirecting to onboarding');
-          navigate('/onboarding', { replace: true });
+          // On localhost, use React Router navigation
+          if (profileData && !profileError) {
+            // User has completed onboarding, redirect to grants page
+            console.log('AuthCallback: Redirecting to grants page');
+            navigate('/grants', { replace: true });
+          } else {
+            // New user, redirect to onboarding
+            console.log('AuthCallback: Redirecting to onboarding');
+            navigate('/onboarding', { replace: true });
+          }
         }
       } catch (error: any) {
         console.error('Error in auth callback:', error);
